@@ -15,60 +15,91 @@
 <script>
 var log = console.log.bind(console)
 
-var __main = function() {
-    var canvas = document.querySelector('#id-canvas');
-    var context = canvas.getContext('2d');
+var imageFormPath = function(path) {
+    var img = new Image()
+    img.src = path
+    return img
+}
 
-    var x = 100
-    var y = 200
-    var speed = 5
-
-    var img = new Image();
-    img.src = 'paddle.png';
-    img.onload = function(){
-        context.drawImage(img,150,200);
+var Paddle = function(){
+    var image = imageFormPath('paddle.png')
+    var o = {
+        image: image,
+        x: 100,
+        y: 200,
+        speed: 5,
     }
+    o.moveLeft = function() {
+        o.x -= o.speed
+    }
+    o.moveRight = function() {
+        o.x += o.speed
+    }
+    return o
+}
 
-
-    var leftDown = false
-    var rightDown = false
-    // keydown event
+var GuaGame = function() {
+    var g = {
+        actions: {},
+        keydowns: {},
+    }
+    var canvas = document.querySelector('#id-canvas')
+    var context = canvas.getContext('2d')
+    g.canvas = canvas
+    g.context = context
+    // draw
+    g.drawImage = function(guaImage) {
+        g.context.drawImage(guaImage.image, guaImage.x, guaImage.y)
+    }
+    //evens
     window.addEventListener('keydown', function(event){
-        log('keydown')
-        var k = event.key
-        // log event
-        if (k == 'a') {
-           leftDown = true
-        }else if (k == 'd') {
-           rightDown = true
-        }
+        g.keydowns[event.key] = true
     })
-
-    // keyup event
     window.addEventListener('keyup', function(event){
-        log('keyup')
-        var k = event.key
-        // log event
-        if (k == 'a') {
-           leftDown = false
-        }else if (k == 'd') {
-           rightDown = false
+        g.keydowns[event.key] = false
+    })
+    // switch the function by the key
+    g.registerAction = function(key, callback) {
+        g.actions[key] = callback
+    }
+    // timer
+    setInterval(function(){
+        // events
+        var actions = Object.keys(g.actions)
+        for (var i = 0; i < actions.length; i++) {
+            var key = actions[i]
+            if(g.keydowns[key]) {
+                // 如果按键被按下,调用注册的action
+                g.actions[key]()
+            }
         }
+        // update
+        g.update()
+        // clear
+        context.clearRect(0, 0, canvas.width, canvas.height)
+       // draw
+        g.draw()
+    }, 1000/60)
+    return g
+}
+
+var __main = function() {
+    var game = GuaGame()
+
+    var paddle = Paddle()
+
+    game.registerAction('a', function(){
+        paddle.moveLeft()
+    })
+    game.registerAction('d', function(){
+        paddle.moveRight()
     })
 
-    setInterval(function(){
-        // update x and y
-        if (leftDown) {
-            x -= speed
-        } else if(rightDown){
-            x += speed
-        }
-        // clamp x
-
-        // draw
-        context.clearRect(0, 0, canvas.width, canvas.height)
-        context.drawImage(img, x, y)
-    }, 0)
+    game.update = function() {
+    }
+    game.draw = function() {
+        game.drawImage(paddle)
+    }
 }
 
 __main()
