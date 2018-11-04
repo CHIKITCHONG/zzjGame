@@ -26,15 +26,57 @@ var Paddle = function(){
     var o = {
         image: image,
         x: 100,
-        y: 200,
-        speed: 5,
+        y: 250,
+        speed: 15,
     }
+    var paddle = o
     o.moveLeft = function() {
         o.x -= o.speed
     }
     o.moveRight = function() {
         o.x += o.speed
     }
+     o.collide = function(ball) {
+        if (ball.y + ball.image.height > o.y) {
+            if (ball.x > o.x && ball.x + o.image.width) {
+                log('相撞')
+                return true
+            }
+        }
+        return false
+    }
+    return o
+}
+
+var Ball = function() {
+    var image = imageFormPath('ball.png')
+    var o = {
+        image: image,
+        x: 100,
+        y: 200,
+        speedX: 10,
+        speedY: 10,
+        fired: false,
+    }
+    o.fire = function() {
+        o.fired = true
+    }
+    o.move = function () {
+        if (o.fired) {
+            // log('move')
+            if (o.x < 0 || o.x > 400) {
+                o.speedX = -o.speedX
+            }
+            if (o.y < 0 || o.y > 300) {
+                o.speedY = -o.speedY
+            }
+            // move
+            o.x += o.speedX
+            o.y += o.speedY
+        }
+
+    }
+
     return o
 }
 
@@ -87,6 +129,7 @@ var __main = function() {
     var game = GuaGame()
 
     var paddle = Paddle()
+    var ball = Ball()
 
     game.registerAction('a', function(){
         paddle.moveLeft()
@@ -94,11 +137,22 @@ var __main = function() {
     game.registerAction('d', function(){
         paddle.moveRight()
     })
+    game.registerAction('f', function(){
+        ball.fire()
+    })
 
     game.update = function() {
+        ball.move()
+        // 判断相撞
+        if (paddle.collide(ball)) {
+            // 这里应该调用一个ball.反弹()
+            ball.speedY *= -1
+        }
+
     }
     game.draw = function() {
         game.drawImage(paddle)
+        game.drawImage(ball)
     }
 }
 
